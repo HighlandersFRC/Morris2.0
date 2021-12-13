@@ -154,7 +154,7 @@ public class Drive extends SubsystemBase {
             originalY = 0;
         }
 
-        double turn = OI.getDriverRightX() * turnLimit * (Constants.TOP_SPEED)/(Constants.ROBOT_RADIUS);
+        double turn = -OI.getDriverRightX() * turnLimit * (Constants.TOP_SPEED)/(Constants.ROBOT_RADIUS);
         double navxOffset = -peripherals.getNavxAngle();
         double xPower = getAdjustedX(originalX, originalY);
         double yPower = getAdjustedY(originalX, originalY);
@@ -185,11 +185,11 @@ public class Drive extends SubsystemBase {
     }
 
     public void autoDrive(Vector velocityVector, double turnRadiansPerSec) {
-        double navxOffset = peripherals.getNavxAngle();
+        double navxOffset = -peripherals.getNavxAngle();
 
         m_pose = m_odometry.update(new Rotation2d(Math.toRadians(navxOffset)), leftFront.getState(Math.toRadians(navxOffset)), rightFront.getState(Math.toRadians(navxOffset)), leftBack.getState(Math.toRadians(navxOffset)), rightBack.getState(Math.toRadians(navxOffset)));
 
-        // System.out.println(m_odometry.getPoseMeters());
+        System.out.println(m_odometry.getPoseMeters() + "Angle: " + getOdometryAngle());
 
         leftFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
         rightFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
@@ -263,12 +263,11 @@ public class Drive extends SubsystemBase {
             Vector velocityVector = new Vector(velocityX, velocityY);
 
             autoDrive(velocityVector, thetaChange);
-            System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
+            // System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
             
             return true;
         }
         else if(currentPointIndex - 1 < 0) {
-            currentPoint = pathPointsJSON.getJSONObject(currentPointIndex);
             nextPoint = pathPointsJSON.getJSONObject(currentPointIndex + 1);
             double nextPointTime = nextPoint.getDouble("Time");
             if(Math.abs((nextPointTime - time)) < cyclePeriod) {
@@ -285,7 +284,7 @@ public class Drive extends SubsystemBase {
 
             autoDrive(velocityVector, thetaChange);
             // System.out.println("Time: " + time +  " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
-            System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
+            // System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
 
             return true;
         }
@@ -349,7 +348,7 @@ public class Drive extends SubsystemBase {
 
         autoDrive(velocityVector, thetaChange);  
         // System.out.println("Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
-        System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
+        // System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
 
         return true;
     }

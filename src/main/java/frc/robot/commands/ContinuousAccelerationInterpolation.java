@@ -67,10 +67,12 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
     // System.out.println()
 
-    currentX = 0;
-    currentY = 0;
-    currentXVelocity = 0;
-    currentYVelocity = 0;
+    // currentX = 0;
+    // currentY = 0;
+    // currentXVelocity = 0;
+    // currentYVelocity = 0;
+
+    // System.out.println(currentTheta);
 
     drive.constantAccelerationInterpolation(currentX, currentY, currentTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
     

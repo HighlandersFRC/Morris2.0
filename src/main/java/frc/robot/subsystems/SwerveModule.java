@@ -59,20 +59,20 @@ public class SwerveModule extends SubsystemBase {
 
         // this block creates the turn vector based on the module's relation to the robot(stays constant because robot is square)
         if(moduleNumber == 1) {
-            turnVector.setI(-Math.sqrt(2)/2.0);
-            turnVector.setJ(-Math.sqrt(2)/2.0);
+            turnVector.setI(Math.sqrt(2)/2.0);
+            turnVector.setJ(Math.sqrt(2)/2.0);
         }
         if(moduleNumber == 2) {
-            turnVector.setI(Math.sqrt(2)/2.0);
-            turnVector.setJ(-Math.sqrt(2)/2.0);
-        }
-        if(moduleNumber == 3) {
-            turnVector.setI(Math.sqrt(2)/2.0);
-            turnVector.setJ(Math.sqrt(2)/2.0);
-        }
-        if(moduleNumber == 4) {
             turnVector.setI(-Math.sqrt(2)/2.0);
             turnVector.setJ(Math.sqrt(2)/2.0);
+        }
+        if(moduleNumber == 3) {
+            turnVector.setI(-Math.sqrt(2)/2.0);
+            turnVector.setJ(-Math.sqrt(2)/2.0);
+        }
+        if(moduleNumber == 4) {
+            turnVector.setI(Math.sqrt(2)/2.0);
+            turnVector.setJ(-Math.sqrt(2)/2.0);
         }
     }
 
