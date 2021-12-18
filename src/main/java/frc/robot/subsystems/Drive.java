@@ -26,6 +26,8 @@ public class Drive extends SubsystemBase {
     // interpolation range
     private final double turnTimePercent = 0.8;
 
+    private final double interpolationCorrection = 0.5;
+
     private final double cyclePeriod = 1.0/50.0;
 
     // creating all the falcons
@@ -124,8 +126,8 @@ public class Drive extends SubsystemBase {
         setDefaultCommand(new DriveDefault(this));
     }
 
-    public void autoInit() {
-        m_odometry.resetPosition(new Pose2d(), new Rotation2d());
+    public void autoInit(JSONArray pathPoints) {
+        m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")), new Rotation2d()), new Rotation2d());
     }
 
     public double getOdometryX() {
@@ -215,7 +217,7 @@ public class Drive extends SubsystemBase {
         double[] timeDiffArray = new double[pathPointsJSON.length()];
 
         for(int i = 0; i < pathPointsJSON.length(); i++) {
-            timeDiffArray[i] = Math.abs(time - pathPointsJSON.getJSONObject(i).getDouble("Time"));
+            timeDiffArray[i] = Math.abs(time - pathPointsJSON.getJSONObject(i).getDouble("time"));
         }
         for(int i = 0; i < timeDiffArray.length; i++) {
             if(i == 0) {
@@ -230,14 +232,19 @@ public class Drive extends SubsystemBase {
             }
         }
 
-        if(time > pathPointsJSON.getJSONObject(pathPointsJSON.length() - 1).getDouble("Time")) {
-            autoDrive(new Vector(0, 0), 0);
-            return true;
+        if(time > pathPointsJSON.getJSONObject(pathPointsJSON.length() - 1).getDouble("time")) {
+            double velocityX = 0;
+            double velocityY = 0;
+            double thetaChange = 0;
+
+            Vector velocityVector = new Vector(velocityX, velocityY);
+            autoDrive(velocityVector, thetaChange);    
+            return true;        
         }
 
         currentPoint = pathPointsJSON.getJSONObject(currentPointIndex);
 
-        double currentPointTime = currentPoint.getDouble("Time");
+        double currentPointTime = currentPoint.getDouble("time");
 
         double velocityX = 0;
         double velocityY = 0;
@@ -245,8 +252,8 @@ public class Drive extends SubsystemBase {
 
         if(currentPointIndex + 1 >= pathPointsJSON.length()) {
             previousPoint = pathPointsJSON.getJSONObject(currentPointIndex - 1);
-            System.out.println(Math.abs((currentPointTime - time)));
-            System.out.println(cyclePeriod);
+            // System.out.println(Math.abs((currentPointTime - time)));
+            // System.out.println(cyclePeriod);
             if(Math.abs((currentPointTime - time)) < cyclePeriod) {
                 System.out.println("Less than cycle");
                 velocityX = currentXVelocity;
@@ -254,30 +261,40 @@ public class Drive extends SubsystemBase {
                 thetaChange = currentThetaVelocity;
             }
             else {
-                velocityX = (currentPoint.getDouble("X") - currentX)/(currentPointTime - time);
-                velocityY = (currentPoint.getDouble("Y") - currentY)/(currentPointTime - time);
-                thetaChange = (currentPoint.getDouble("Theta") - currentTheta)/(currentPointTime - time);
+                velocityX = (currentPoint.getDouble("x") - currentX)/(currentPointTime - time);
+                velocityY = (currentPoint.getDouble("y") - currentY)/(currentPointTime - time);
+                thetaChange = (currentPoint.getDouble("angle") - currentTheta)/(currentPointTime - time);
             }
+            // velocityArray[0] = velocityX;
+            // velocityArray[1] = velocityY;
+            // velocityArray[2] = thetaChange;
+            // return velocityArray;
             Vector velocityVector = new Vector(velocityX, velocityY);
 
+
             autoDrive(velocityVector, thetaChange);
-            System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
+            // System.out.println("CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
+            System.out.println("Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
             
             return true;
         }
         else if(currentPointIndex - 1 < 0) {
             nextPoint = pathPointsJSON.getJSONObject(currentPointIndex + 1);
-            double nextPointTime = nextPoint.getDouble("Time");
+            double nextPointTime = nextPoint.getDouble("time");
             if(Math.abs((nextPointTime - time)) < cyclePeriod) {
                 velocityX = currentXVelocity;
                 velocityY = currentYVelocity;
                 thetaChange = currentThetaVelocity;
             }
             else {
-                velocityX = (nextPoint.getDouble("X") - currentX)/(nextPointTime - time);
-                velocityY = (nextPoint.getDouble("Y") - currentY)/(nextPointTime - time);
-                thetaChange = (nextPoint.getDouble("Theta") - currentTheta)/(nextPointTime - time);
+                velocityX = (nextPoint.getDouble("x") - currentX)/(nextPointTime - time);
+                velocityY = (nextPoint.getDouble("y") - currentY)/(nextPointTime - time);
+                thetaChange = (nextPoint.getDouble("angle") - currentTheta)/(nextPointTime - time);
             }
+            // velocityArray[0] = velocityX;
+            // velocityArray[1] = velocityY;
+            // velocityArray[2] = thetaChange;
+            // return velocityArray;
             Vector velocityVector = new Vector(velocityX, velocityY);
 
             autoDrive(velocityVector, thetaChange);
@@ -290,8 +307,8 @@ public class Drive extends SubsystemBase {
         nextPoint = pathPointsJSON.getJSONObject(currentPointIndex + 1);
         previousPoint = pathPointsJSON.getJSONObject(currentPointIndex - 1);
 
-        double nextPointTime = nextPoint.getDouble("Time");
-        double previousPointTime = previousPoint.getDouble("Time");
+        double nextPointTime = nextPoint.getDouble("time");
+        double previousPointTime = previousPoint.getDouble("time");
 
         double timeDiffT1 = (currentPointTime - previousPointTime);
         // double timeTonextPoint = (nextPointTime - time);
@@ -300,34 +317,53 @@ public class Drive extends SubsystemBase {
         double timeDiffT2 = nextPointTime - currentPointTime;
         double t2 = (timeDiffT2 * (1 - turnTimePercent)) + currentPointTime;
 
-        if(time <= t1) {
+        if(time < t1) {
             if(Math.abs((currentPointTime - time)) < cyclePeriod) {
+                // System.out.println("WITHIN CYCLE PERIOD");
                 velocityX = currentXVelocity;
                 velocityY = currentYVelocity;
                 thetaChange = currentThetaVelocity;
             }
             else {
-                velocityX = (currentPoint.getDouble("X") - currentX)/(currentPointTime - time);
-                velocityY = (currentPoint.getDouble("Y") - currentY)/(currentPointTime - time);
-                thetaChange = (currentPoint.getDouble("Theta") - currentTheta)/(currentPointTime - time);
+                // System.out.println("NOT WITHIN CYCLE PERIOD");
+                velocityX = (currentPoint.getDouble("x") - currentX)/(currentPointTime - time);
+                velocityY = (currentPoint.getDouble("y") - currentY)/(currentPointTime - time);
+                thetaChange = (currentPoint.getDouble("angle") - currentTheta)/(currentPointTime - time);
             }
         }
-        else if(time > t1 && time < t2) {
-            double t1X = currentXVelocity;
-            double t1Y = currentYVelocity;
-            double t1Theta = currentThetaVelocity;
+        else if(time >= t1 && time < t2) {
+            double t1X = (currentPoint.getDouble("x") - previousPoint.getDouble("x"))/timeDiffT1;
+            double t1Y = (currentPoint.getDouble("y") - previousPoint.getDouble("y"))/timeDiffT1;
+            double t1Theta = (currentPoint.getDouble("angle") - previousPoint.getDouble("angle"))/timeDiffT1;
 
-            double t2X = (nextPoint.getDouble("X") - currentPoint.getDouble("X"))/timeDiffT2;
-            double t2Y = (nextPoint.getDouble("Y") - currentPoint.getDouble("Y"))/timeDiffT2;
-            double t2Theta = (nextPoint.getDouble("Theta") - currentPoint.getDouble("Theta"))/timeDiffT2;
+            double t2X = (nextPoint.getDouble("x") - currentPoint.getDouble("x"))/timeDiffT2;
+            double t2Y = (nextPoint.getDouble("y") - currentPoint.getDouble("y"))/timeDiffT2;
+            double t2Theta = (nextPoint.getDouble("angle") - currentPoint.getDouble("angle"))/timeDiffT2;
 
-            double accelX = safeDivision((t2X - t1X), (t2 - time));
-            double accelY = safeDivision((t2Y - t1Y), (t2 - time));
-            double accelTheta = safeDivision((t2Theta - t1Theta), (t2 - time));
+            double idealAccelX = (t2X - t1X)/(t2 - t1);
+            double idealAccelY = (t2Y - t1Y)/(t2- t1);
+            double idealAccelTheta = (t2Theta - t1Theta)/(t2 - t1);
 
-            velocityX = (accelX * cyclePeriod) + t1X;
-            velocityY = (accelY * cyclePeriod) + t1Y;
-            thetaChange = (accelTheta * cyclePeriod) + t1Theta;
+            double t1XPosition = (t1X * t1) + previousPoint.getDouble("x");
+            double t1YPosition = (t1Y * t1) + previousPoint.getDouble("y");
+            double t1ThetaPosition = (t1Theta * t1) + previousPoint.getDouble("angle");
+
+            double interpTime = time - t1 + cyclePeriod;
+
+            double idealPositionX = (idealAccelX/2) * (Math.pow(interpTime, 2)) + t1X * (interpTime) + t1XPosition;
+            double idealPositionY = (idealAccelY/2) * (Math.pow(interpTime, 2)) + t1Y * (interpTime) + t1YPosition;
+            double idealPositionTheta = (idealAccelTheta/2) * (Math.pow(interpTime, 2)) + t1Theta * (interpTime) + t1ThetaPosition;
+
+            double idealVelocityX = t1X + (idealAccelX * interpTime);
+            double idealVelocityY = t1Y + (idealAccelY * interpTime);
+            double idealVelocityTheta = t1Theta + (idealAccelTheta * interpTime);
+
+            velocityX = (idealPositionX - currentX) * interpolationCorrection + idealVelocityX;
+            velocityY = (idealPositionY - currentY) * interpolationCorrection + idealVelocityY;
+            thetaChange = (idealPositionTheta - currentTheta) * interpolationCorrection + idealVelocityTheta;
+
+            // System.out.println(Math.round(time * (100.0))/100.0 + ", " + Math.round(velocityX * 100.0)/100.0 + ", " + Math.round(currentXVelocity * 100.0)/100.0);
+            // System.out.println("INSIDE INTERPOLATION" + " Time: " + time + " Point: " + currentPointIndex + " X: " + currentX + " CurrentXVelocity: " + currentXVelocity + " Y: " + currentY +  " AccelX: " + accelX + " AccelY: " + accelY);
         }
         else if(time >= t2) {
             if(Math.abs((nextPointTime - time)) < cyclePeriod) {
@@ -336,18 +372,21 @@ public class Drive extends SubsystemBase {
                 thetaChange = currentThetaVelocity;
             }
             else {
-                velocityX = (nextPoint.getDouble("X") - currentX)/(nextPointTime - time);
-                velocityY = (nextPoint.getDouble("Y") - currentY)/(nextPointTime - time);
-                thetaChange = (nextPoint.getDouble("Theta") - currentTheta)/(nextPointTime - time);
+                velocityX = (nextPoint.getDouble("x") - currentX)/(nextPointTime - time);
+                velocityY = (nextPoint.getDouble("y") - currentY)/(nextPointTime - time);
+                thetaChange = (nextPoint.getDouble("angle") - currentTheta)/(nextPointTime - time);
             }
         }
 
         Vector velocityVector = new Vector(velocityX, velocityY);
 
-        autoDrive(velocityVector, thetaChange);  
-        System.out.println("Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
-        // System.out.println("Inside Last Point" + " CurrentPointTime: " + currentPointTime + " Time: " + time + " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + "Theta: " + currentTheta + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
+        System.out.println("Time: " + time +  " VelocityX: " + velocityVector.getI() + " VelocityY: " + velocityVector.getJ() + " ThetaChange: " + thetaChange + " CurentX: " + currentX + " CurrentY: " + currentY);
 
+        autoDrive(velocityVector, thetaChange); 
+        // velocityArray[0] = velocityX;
+        // velocityArray[1] = velocityY;
+        // velocityArray[2] = thetaChange;
+        // return velocityArray;         
         return true;
     }
 

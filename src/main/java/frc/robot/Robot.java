@@ -86,7 +86,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    drive.autoInit();
+    drive.autoInit(pathJSON);
     testPath = new ContinuousAccelerationInterpolation(drive, pathJSON);
     testPath.schedule();
   }

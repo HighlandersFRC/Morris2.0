@@ -23,6 +23,12 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     private double currentY = 0;
     private double currentTheta = 0;
 
+    private double estimatedX = 0.0;
+    private double estimatedY = 0.0;
+
+    private double previousEstimateX = 0.0;
+    private double previousEstimateY = 0.0;
+
     private double initTime;
     private double currentTime;
     private double previousTime;
@@ -37,6 +43,8 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     private double currentThetaVelocity = 0;
 
     private JSONArray pathPointsJSON;
+
+    private double cyclePeriod = 1.0/50.0;
 
     public ContinuousAccelerationInterpolation(Drive drive, JSONArray path) {
       this.drive = drive;
@@ -58,14 +66,14 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     currentY = drive.getOdometryY();
     currentTheta = drive.getOdometryAngle();
     currentTime = Timer.getFPGATimestamp() - initTime;
+
     timeDiff = currentTime - previousTime;
-    // System.out.println(currentTime);
 
-    currentXVelocity = (currentX - previousX) * 1/timeDiff;
-    currentYVelocity = (currentY - previousY) * 1/timeDiff;
-    currentThetaVelocity = (currentTheta - previousTheta) * 1/timeDiff;
+    currentXVelocity = (currentX - previousX)/timeDiff;
+    currentYVelocity = (currentY - previousY)/timeDiff;
+    currentThetaVelocity = (currentTheta - previousTheta)/timeDiff;
 
-    // System.out.println()
+    estimatedX = previousEstimateX + (cyclePeriod * currentXVelocity);
 
     // currentX = 0;
     // currentY = 0;
@@ -75,7 +83,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     // currentTheta = 0;
     // currentThetaVelocity = 0;
 
-    // System.out.println(currentTheta);
+    // System.out.println(currentTime - previousTime);
 
     drive.constantAccelerationInterpolation(currentX, currentY, currentTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
     
