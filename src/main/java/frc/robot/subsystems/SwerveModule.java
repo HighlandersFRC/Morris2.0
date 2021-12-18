@@ -57,6 +57,11 @@ public class SwerveModule extends SubsystemBase {
         // sets drive motor to brake
         driveMotor.setNeutralMode(NeutralMode.Brake);
 
+
+        //       +x
+        //       ^ 
+        // +y <__|
+
         // this block creates the turn vector based on the module's relation to the robot(stays constant because robot is square)
         if(moduleNumber == 1) {
             turnVector.setI(Math.sqrt(2)/2.0);
@@ -190,7 +195,6 @@ public class SwerveModule extends SubsystemBase {
     // method to determine the angle of each wheel and the percent to set each module to
     // speedVector is a <x, y> ground speed relative to the field measured in meters/second, turnRate is in radians/second relatie to the robot(positive is counterclockwise), navxOffset is in radians(positive is counterclockwise)
     public void velocityDrive(Vector speedVector, double turnRate, double navxOffset) {
-
         if(Math.abs(speedVector.getI()) < 0.0001 && Math.abs(speedVector.getJ()) < 0.0001 && Math.abs(turnRate) < 0.01) {
             driveMotor.set(ControlMode.Velocity, 0.0);
             // angleMotor.set(ControlMode.PercentOutput, 0);

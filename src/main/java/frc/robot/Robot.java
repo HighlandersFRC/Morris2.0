@@ -59,6 +59,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    SmartDashboard.putNumber("Navx Value", peripherals.getNavxAngle());
     CommandScheduler.getInstance().run();
   }
 
