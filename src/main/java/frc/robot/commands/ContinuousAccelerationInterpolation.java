@@ -89,39 +89,49 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+    // get odometry positions
     currentX = drive.getOdometryX();
     currentY = drive.getOdometryY();
     currentTheta = drive.getOdometryAngle();
-    currentTime = Timer.getFPGATimestamp() - initTime;
 
+    currentTime = Timer.getFPGATimestamp() - initTime;
     timeDiff = currentTime - previousTime;
 
+    // determine current velocities based on current position minus previous position divided by time difference
     currentXVelocity = (currentX - previousX)/timeDiff;
     currentYVelocity = (currentY - previousY)/timeDiff;
     currentThetaVelocity = (currentTheta - previousTheta)/timeDiff;
 
+    // determine estimated position by integrating current velocity by time and adding previous estimated position
     estimatedX = previousEstimateX + (cyclePeriod * currentXVelocity);
     estimatedY = previousEstimateY + (cyclePeriod * currentYVelocity);
+    estimatedTheta = previousEstimateTheta + (cyclePeriod * currentThetaVelocity);
 
+    // average the odometry position with estimated position
     averagedX = (estimatedX + currentX)/2;
     averagedY = (estimatedY + currentY)/2;
     averagedTheta = (estimatedTheta + currentTheta)/2;
 
     System.out.println("Time: " + currentTime + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
+    // call ConstantAccelerationInterpolation function
     desiredVelocityArray = drive.constantAccelerationInterpolation(averagedX, averagedY, averagedTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
     
+    // create velocity vector and set desired theta change
     Vector velocityVector = new Vector(desiredVelocityArray[0], desiredVelocityArray[1]);
     desiredThetaChange = desiredVelocityArray[2];
+
+    // call autoDrive function to move the robot
     drive.autoDrive(velocityVector, desiredThetaChange);
 
+    // set all previous variables to current variables to stay up to date
     previousX = currentX;
     previousY = currentY;
     previousTheta = currentTheta;
     previousTime = currentTime;
-
     previousEstimateX = estimatedX;
     previousEstimateY = estimatedY;
+    previousEstimateTheta = estimatedTheta;
   }
 
   // Called once the command ends or is interrupted.
