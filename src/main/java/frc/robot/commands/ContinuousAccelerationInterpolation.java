@@ -25,9 +25,15 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
     private double estimatedX = 0.0;
     private double estimatedY = 0.0;
+    private double estimatedTheta = 0.0;
 
     private double previousEstimateX = 0.0;
     private double previousEstimateY = 0.0;
+    private double previousEstimateTheta = 0.0;
+
+    private double averagedX = 0.0;
+    private double averagedY = 0.0;
+    private double averagedTheta = 0.0;
 
     private double initTime;
     private double currentTime;
@@ -44,6 +50,9 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
     private JSONArray pathPointsJSON;
 
+    private double[] desiredVelocityArray = new double[3];
+    private double desiredThetaChange = 0;
+
     private double cyclePeriod = 1.0/50.0;
 
     public ContinuousAccelerationInterpolation(Drive drive, JSONArray path) {
@@ -56,7 +65,25 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
+      estimatedX = drive.getOdometryX();
+      estimatedY = drive.getOdometryY();
+
+      previousEstimateX = estimatedX;
+      previousEstimateY = estimatedY;
+
+      currentX = drive.getOdometryX();
+      currentY = drive.getOdometryY();
+
+      previousX = currentX;
+      previousY = currentY;
+
+      averagedX = (estimatedX + currentX)/2;
+      averagedY = (estimatedY + currentY)/2;
+      averagedTheta = (estimatedTheta + currentTheta)/2;
+
       initTime = Timer.getFPGATimestamp();
+      System.out.println("Time: " + currentTime + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
+
     }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -74,23 +101,27 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     currentThetaVelocity = (currentTheta - previousTheta)/timeDiff;
 
     estimatedX = previousEstimateX + (cyclePeriod * currentXVelocity);
+    estimatedY = previousEstimateY + (cyclePeriod * currentYVelocity);
 
-    // currentX = 0;
-    // currentY = 0;
-    // currentXVelocity = 0;
-    // currentYVelocity = 0;
+    averagedX = (estimatedX + currentX)/2;
+    averagedY = (estimatedY + currentY)/2;
+    averagedTheta = (estimatedTheta + currentTheta)/2;
 
-    // currentTheta = 0;
-    // currentThetaVelocity = 0;
+    System.out.println("Time: " + currentTime + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
-    // System.out.println(currentTime - previousTime);
-
-    drive.constantAccelerationInterpolation(currentX, currentY, currentTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
+    desiredVelocityArray = drive.constantAccelerationInterpolation(averagedX, averagedY, averagedTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
     
+    Vector velocityVector = new Vector(desiredVelocityArray[0], desiredVelocityArray[1]);
+    desiredThetaChange = desiredVelocityArray[2];
+    drive.autoDrive(velocityVector, desiredThetaChange);
+
     previousX = currentX;
     previousY = currentY;
     previousTheta = currentTheta;
     previousTime = currentTime;
+
+    previousEstimateX = estimatedX;
+    previousEstimateY = estimatedY;
   }
 
   // Called once the command ends or is interrupted.
